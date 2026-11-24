@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>আমার ব্যানার তৈরি করুন</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f2f4f8;
+      color: #222;
+      text-align: center;
+      padding: 20px;
+    }
+    h1 { margin-bottom: 8px; }
+    p { margin-top: 0; color: #555; }
+    .card {
+      max-width: 640px;
+      margin: 20px auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    canvas {
+      width: 100%;
+      height: auto;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background: #eee;
+    }
+    input[type=file] { margin: 15px 0; }
+    button {
+      background: #1a73e8;
+      color: #fff;
+      border: none;
+      padding: 12px 24px;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:disabled { background: #aaa; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+  <h1>আমার ব্যানার তৈরি করুন</h1>
+  <p>আপনার ছবি আপলোড করুন, ব্যানার তৈরি হয়ে যাবে।</p>
+
+  <div class="card">
+    <canvas id="canvas"></canvas>
+    <br>
+    <input type="file" id="upload" accept="image/*">
+    <br>
+    <button id="download" disabled>ব্যানার ডাউনলোড করুন</button>
+  </div>
+
+  <script>
+    // ===== এই সংখ্যাগুলো আপনার ব্যানার অনুযায়ী বদলান =====
+    const BANNER_FILE = 'banner.png';
+    const PHOTO_X = 100;   // ছবির বাঁ দিক থেকে দূরত্ব
+    const PHOTO_Y = 100;   // ছবির উপর থেকে দূরত্ব
+    const PHOTO_W = 400;   // ছবি বসানোর জায়গার প্রস্থ
+    const PHOTO_H = 400;   // ছবি বসানোর জায়গার উচ্চতা
+    // =====================================================
+
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const upload = document.getElementById('upload');
+    const downloadBtn = document.getElementById('download');
+
+    const banner = new Image();
+    banner.src = BANNER_FILE;
+    let userPhoto = null;
+
+    banner.onload = () => {
+      canvas.width = banner.width;
+      canvas.height = banner.height;
+      draw();
+    };
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      if (userPhoto) {
+        // ছবিটা জায়গা অনুযায়ী ক্রপ করে বসানো হচ্ছে
+        const scale = Math.max(PHOTO_W / userPhoto.width, PHOTO_H / userPhoto.height);
+        const w = userPhoto.width * scale;
+        const h = userPhoto.height * scale;
+        const x = PHOTO_X + (PHOTO_W - w) / 2;
+        const y = PHOTO_Y + (PHOTO_H - h) / 2;
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(PHOTO_X, PHOTO_Y, PHOTO_W, PHOTO_H);
+        ctx.clip();
+        ctx.drawImage(userPhoto, x, y, w, h);
+        ctx.restore();
+      }
+
+      // ব্যানার সবার উপরে বসবে
+      ctx.drawImage(banner, 0, 0);
+    }
+
+    upload.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const img = new Image();
+      img.onload = () => {
+        userPhoto = img;
+        draw();
+        downloadBtn.disabled = false;
+      };
+      img.src = URL.createObjectURL(file);
+    });
+
+    downloadBtn.addEventListener('click', () => {
+      const link = document.createElement('a');
+      link.download = 'my-banner.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    });
+  </script>
+</body>
+</html>
